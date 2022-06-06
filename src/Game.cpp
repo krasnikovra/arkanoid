@@ -15,8 +15,8 @@ Game::Game() : Game(800, 600) {}
 
 Game::Game(const unsigned winWidth, const unsigned winHeight) :
     _window(std::make_unique<sf::RenderWindow>(sf::VideoMode(winWidth, winHeight), GAME_NAME)),
-    _ball(std::make_unique<Ball>(*this, BALL_VEL, BALL_RADIUS, BALL_COLOR)),
-    _racket(std::make_unique<Racket>(*this, winHeight * RACKET_Y, RACKET_SPEED, 
+    _ball(std::make_shared<Ball>(*this, BALL_VEL, BALL_RADIUS, BALL_COLOR)),
+    _racket(std::make_shared<Racket>(*this, winHeight * RACKET_Y, RACKET_SPEED,
             sf::Vector2f(winWidth * RACKET_SIZE.x, winHeight * RACKET_SIZE.y), RACKET_COLOR)),
     _collisionsManager(std::make_unique<CollisionsManager>()) {
     _collisionsManager->addAtacker(_racket);
