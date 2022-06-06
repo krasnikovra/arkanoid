@@ -2,7 +2,7 @@
 #include "Attacker.h"
 #include <functional>
 
-void CollisionsManager::addAtacker(const std::shared_ptr<Attacker>& attacker) {
+void CollisionsManager::addAttacker(const std::shared_ptr<Attacker>& attacker) {
     _attackers.push_back(attacker);
 }
 

@@ -19,7 +19,7 @@ Game::Game(const unsigned winWidth, const unsigned winHeight) :
     _racket(std::make_shared<Racket>(*this, winHeight * RACKET_Y, RACKET_SPEED,
             sf::Vector2f(winWidth * RACKET_SIZE.x, winHeight * RACKET_SIZE.y), RACKET_COLOR)),
     _collisionsManager(std::make_unique<CollisionsManager>()) {
-    _collisionsManager->addAtacker(_racket);
+    _collisionsManager->addAttacker(_racket);
     _collisionsManager->addDefender(_ball);
 }
 
