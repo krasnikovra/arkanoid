@@ -165,8 +165,10 @@
   <ItemGroup>
     <ClCompile Include="src\Ball.cpp" />
     <ClCompile Include="src\BlocksGrid.cpp" />
+    <ClCompile Include="src\Bonus.cpp" />
     <ClCompile Include="src\CollisionsManager.cpp" />
     <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\Label.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Racket.cpp" />
     <ClCompile Include="src\Block.cpp" />
@@ -175,9 +177,11 @@
     <ClInclude Include="include\Attacker.h" />
     <ClInclude Include="include\Ball.h" />
     <ClInclude Include="include\BlocksGrid.h" />
+    <ClInclude Include="include\Bonus.h" />
     <ClInclude Include="include\CollisionsManager.h" />
     <ClInclude Include="include\Defender.h" />
     <ClInclude Include="include\Game.h" />
+    <ClInclude Include="include\Label.h" />
     <ClInclude Include="include\Racket.h" />
     <ClInclude Include="include\Block.h" />
     <ClInclude Include="include\Utils.h" />

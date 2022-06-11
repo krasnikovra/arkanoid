@@ -36,8 +36,23 @@ public:
     virtual std::function<void(void)> hitBy(const Attacker& attacker) override {
         return attacker.collideWith(*this);
     }
+    virtual void setSpeed(const float speed) = 0;
+    virtual float getSpeed() const = 0;
+    virtual void setPosition(const sf::Vector2f& pos) = 0;
     virtual bool isDead() const = 0;
     virtual void damage() = 0;
+    virtual sf::Vector2f getPosition() const = 0;
+    virtual sf::Vector2f getSize() const = 0;
+};
+
+class DefenderBonus : public Defender {
+public:
+    virtual ~DefenderBonus() = default;
+    virtual std::function<void(void)> hitBy(const Attacker& attacker) override {
+        return attacker.collideWith(*this);
+    }
+    virtual bool isDead() const = 0;
+    virtual void invokeBonusAction() = 0;
     virtual sf::Vector2f getPosition() const = 0;
     virtual sf::Vector2f getSize() const = 0;
 };
