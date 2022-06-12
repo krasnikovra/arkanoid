@@ -65,14 +65,14 @@ std::function<void(void)> Block::collideWith(DefenderBlock& block) const {
     float mySpeed = getSpeed();
     if (!myRect.intersects(otherRect))
         return [](void) -> void { return; };
+    if (otherSpeed * mySpeed > 0)
+        return [](void) -> void { return; };
     return [=, &block](void) -> void {
-        if (otherSpeed * mySpeed <= 0) {
-             if (otherSpeed > 0)
-                block.setPosition(sf::Vector2f(myPos.x - otherSize.x, otherPos.y));
-            else
-                block.setPosition(sf::Vector2f(myPos.x + mySize.x, otherPos.y));
-            block.setSpeed(-otherSpeed);
-        }
+         if (otherSpeed > 0)
+            block.setPosition(sf::Vector2f(myPos.x - otherSize.x, otherPos.y));
+        else
+            block.setPosition(sf::Vector2f(myPos.x + mySize.x, otherPos.y));
+        block.setSpeed(-otherSpeed);
     };
 }
 
@@ -82,27 +82,27 @@ std::function<void(void)> Block::collideWith(DefenderBonus& bonus) const {
 
 bool Block::_collideWithBall(const sf::Vector2f& ballBackupPos, const sf::Vector2f& selfBackupPos, DefenderBall& ball) const {
     sf::Vector2f pos = ballBackupPos;
-    sf::Vector2f racketPos = selfBackupPos;
-    sf::Vector2f racketSize = _shape.getSize();
+    sf::Vector2f blockPos = selfBackupPos;
+    sf::Vector2f blockSize = _shape.getSize();
     sf::Vector2f velocity = ball.getVelocity();
     float radius = ball.getRadius();
     sf::Vector2f midPoint = pos + sf::Vector2f(radius, radius);
     // zones of collision, not intersecting
     sf::FloatRect top = sf::FloatRect(
-        racketPos - sf::Vector2f(0, radius),
-        sf::Vector2f(racketSize.x, radius)
+        blockPos - sf::Vector2f(0, radius),
+        sf::Vector2f(blockSize.x, radius)
     );
     sf::FloatRect bot = sf::FloatRect(
-        racketPos + sf::Vector2f(0, racketSize.y),
-        sf::Vector2f(racketSize.x, radius)
+        blockPos + sf::Vector2f(0, blockSize.y),
+        sf::Vector2f(blockSize.x, radius)
     );
     sf::FloatRect left = sf::FloatRect(
-        racketPos - sf::Vector2f(radius, 0),
-        sf::Vector2f(radius, racketSize.y)
+        blockPos - sf::Vector2f(radius, 0),
+        sf::Vector2f(radius, blockSize.y)
     );
     sf::FloatRect right = sf::FloatRect(
-        racketPos + sf::Vector2f(racketSize.x, 0),
-        sf::Vector2f(radius, racketSize.y)
+        blockPos + sf::Vector2f(blockSize.x, 0),
+        sf::Vector2f(radius, blockSize.y)
     );
     // zones dont intersect so these ifs are independent
     if (top.contains(midPoint)) {
@@ -130,46 +130,30 @@ bool Block::_collideWithBall(const sf::Vector2f& ballBackupPos, const sf::Vector
         return true;
     }
     // corners
-    sf::Vector2f nw = racketPos;
-    sf::Vector2f ne = racketPos + sf::Vector2f(racketSize.x, 0);
-    sf::Vector2f sw = racketPos + sf::Vector2f(0, racketSize.y);
-    sf::Vector2f se = racketPos + racketSize;
-    // warning: magic math
-    auto BallIsCloseTo = [&midPoint, &radius](const sf::Vector2f& point) -> bool {
-        return DistSqr(midPoint, point) < radius * radius;
-    };
+    sf::Vector2f nw = blockPos;
+    sf::Vector2f ne = blockPos + sf::Vector2f(blockSize.x, 0);
+    sf::Vector2f sw = blockPos + sf::Vector2f(0, blockSize.y);
+    sf::Vector2f se = blockPos + blockSize;
     sf::Vector2f corner = sf::Vector2f(-1, -1);
     for (auto& corn : { nw, ne, sw, se })
-        if (BallIsCloseTo(corn))
+        if (ball.isCloseTo(corn))
             corner = corn;
     if (corner == sf::Vector2f(-1, -1))
         return false;
-    sf::Vector2f rad = corner - midPoint;
-    bool isVelAnticlockwiseRad = (velocity.x * rad.y - velocity.y * rad.x) < 0;
-    float velRadDotProd = velocity.x * rad.x + velocity.y * rad.y;
-    // here if racket catches a ball right on a corner while moving
-    // we change y velocity so ball just run away and push it
-    // basically, like top/bot cases but push a bit less
-    if (velRadDotProd < 0) { // racket just catched the ball ongoing
-        // racket "push" the ball horizontally, also some magic
-        float push = sqrt(radius * radius - rad.y * rad.y) - abs(rad.x);
+    sf::Vector2f axis = corner - midPoint;
+    if (Dot(velocity, axis) > 0) {
+        sf::Vector2f velProjAxis = Dot(velocity, axis) / Dot(axis, axis) * axis;
+        sf::Vector2f velProjConj = velocity - velProjAxis;
+        sf::Vector2f newVelocity = velProjConj - velProjAxis;
+        ball.setVelocity(newVelocity);
+    }
+    else {
+        float push = sqrt(radius * radius - axis.y * axis.y) - abs(axis.x);
         ball.setPosition(pos + sf::Vector2f(velocity.x > 0 ? push : -push, 0));
         // also could need to change y velocity
-        if (rad.y * velocity.y > 0)
+        if (axis.y * velocity.y > 0)
             ball.setVelocity(sf::Vector2f(velocity.x, -velocity.y));
-        return true;
     }
-    float velNorm = sqrt(DistSqr(velocity, sf::Vector2f(0, 0)));
-    float radNorm = sqrt(DistSqr(rad, sf::Vector2f(0, 0)));
-    float cosVelRadAngle = velRadDotProd / (velNorm * radNorm);
-    float angle = static_cast<float>(M_PI) + 2 * acos(cosVelRadAngle);
-    if (!isVelAnticlockwiseRad)
-        angle = -angle;
-    sf::Vector2f newVelocity = sf::Vector2f(
-        velocity.x * cos(angle) + velocity.y * sin(angle),
-        -velocity.x * sin(angle) + velocity.y * cos(angle)
-    );
-    ball.setVelocity(newVelocity);
     return true;
 }
 

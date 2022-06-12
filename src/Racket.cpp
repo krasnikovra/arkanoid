@@ -128,42 +128,26 @@ bool Racket::_collideWithBall(const sf::Vector2f& ballBackupPos, const sf::Vecto
     sf::Vector2f ne = racketPos + sf::Vector2f(racketSize.x, 0);
     sf::Vector2f sw = racketPos + sf::Vector2f(0, racketSize.y);
     sf::Vector2f se = racketPos + racketSize;
-    // warning: magic math
-    auto BallIsCloseTo = [&midPoint, &radius](const sf::Vector2f& point) -> bool {
-        return DistSqr(midPoint, point) < radius * radius;
-    };
     sf::Vector2f corner = sf::Vector2f(-1, -1);
     for (auto& corn : { nw, ne, sw, se })
-        if (BallIsCloseTo(corn))
+        if (ball.isCloseTo(corn))
             corner = corn;
     if (corner == sf::Vector2f(-1, -1))
         return false;
-    sf::Vector2f rad = corner - midPoint;
-    bool isVelAnticlockwiseRad = (velocity.x * rad.y - velocity.y * rad.x) < 0;
-    float velRadDotProd = velocity.x * rad.x + velocity.y * rad.y;
-    // here if racket catches a ball right on a corner while moving
-    // we change y velocity so ball just run away and push it
-    // basically, like top/bot cases but push a bit less
-    if (velRadDotProd < 0) { // racket just catched the ball ongoing
-        // racket "push" the ball horizontally, also some magic
-        float push = sqrt(radius * radius - rad.y * rad.y) - abs(rad.x);
+    sf::Vector2f axis = corner - midPoint;
+    if (Dot(velocity, axis) > 0) {
+        sf::Vector2f velProjAxis = Dot(velocity, axis) / Dot(axis, axis) * axis;
+        sf::Vector2f velProjConj = velocity - velProjAxis;
+        sf::Vector2f newVelocity = velProjConj - velProjAxis;
+        ball.setVelocity(newVelocity);
+    }
+    else {
+        float push = sqrt(radius * radius - axis.y * axis.y) - abs(axis.x);
         ball.setPosition(pos + sf::Vector2f(velocity.x > 0 ? push : -push, 0));
         // also could need to change y velocity
-        if (rad.y * velocity.y > 0)
+        if (axis.y * velocity.y > 0)
             ball.setVelocity(sf::Vector2f(velocity.x, -velocity.y));
-        return true;
     }
-    float velNorm = sqrt(DistSqr(velocity, sf::Vector2f(0, 0)));
-    float radNorm = sqrt(DistSqr(rad, sf::Vector2f(0, 0)));
-    float cosVelRadAngle = velRadDotProd / (velNorm * radNorm);
-    float angle = static_cast<float>(M_PI) + 2 * acos(cosVelRadAngle);
-    if (!isVelAnticlockwiseRad)
-        angle = -angle;
-    sf::Vector2f newVelocity = sf::Vector2f(
-        velocity.x * cos(angle) + velocity.y * sin(angle),
-        -velocity.x * sin(angle) + velocity.y * cos(angle)
-    );
-    ball.setVelocity(newVelocity);
     return true;
 }
 

@@ -27,20 +27,25 @@ void CollisionsManager::addDefender(BlocksGrid& defender) {
 
 void CollisionsManager::handleCollisions() {
     std::vector<std::function<void(void)>> callbacks;
-    for (auto defenderIt = _defenders.begin(); defenderIt != _defenders.end(); defenderIt++)
-        for (auto attackerIt = _attackers.begin(); attackerIt != _attackers.end(); attackerIt++) {
-            if (attackerIt->expired()) {
-                _attackers.erase(attackerIt--);
-                continue;
+    auto defenderIt = _defenders.begin();
+    while (defenderIt != _defenders.end()) {
+        if (defenderIt->expired())
+            defenderIt = _defenders.erase(defenderIt);
+        else {
+            auto attackerIt = _attackers.begin();
+            while (attackerIt != _attackers.end()) {
+                if (attackerIt->expired())
+                    attackerIt = _attackers.erase(attackerIt);
+                else {
+                    auto defenderPtr = defenderIt->lock();
+                    auto attackerPtr = attackerIt->lock();
+                    callbacks.push_back(defenderPtr->hitBy(*attackerPtr));
+                    attackerIt++;
+                }
             }
-            if (defenderIt->expired()) {
-                _defenders.erase(defenderIt--);
-                continue;
-            }
-            auto defenderPtr = defenderIt->lock();
-            auto attackerPtr = attackerIt->lock();
-            callbacks.push_back(defenderPtr->hitBy(*attackerPtr));
+            defenderIt++;
         }
+    }
     for (auto& callback : callbacks)
         std::invoke(callback);
 }

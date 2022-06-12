@@ -48,9 +48,9 @@ Game::Game(const unsigned winWidth, const unsigned winHeight) :
                 BOOST_BLOCK_MULTIPLIER,
                 BOOST_BLOCK_DURATIONMS,
                 MOVING_BLOCK_SPEED)) {
-    _collisionsManager->addAttacker(_racket);
     _collisionsManager->addAttacker(_balls[0]);
     _collisionsManager->addDefender(_balls[0]);
+    _collisionsManager->addAttacker(_racket);
     _collisionsManager->addAttacker(*_blocksGrid);
     _collisionsManager->addDefender(*_blocksGrid);
 }
